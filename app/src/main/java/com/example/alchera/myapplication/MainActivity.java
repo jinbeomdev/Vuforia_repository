@@ -1,7 +1,6 @@
 package com.example.alchera.myapplication;
 
 import android.app.Activity;
-import android.graphics.PixelFormat;
 import android.opengl.GLSurfaceView;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -10,29 +9,22 @@ import android.view.ViewGroup;
 
 import com.vuforia.CameraDevice;
 import com.vuforia.DataSet;
-import com.vuforia.Device;
 import com.vuforia.INIT_FLAGS;
-import com.vuforia.ObjectTarget;
 import com.vuforia.ObjectTracker;
-import com.vuforia.Renderer;
 import com.vuforia.STORAGE_TYPE;
 import com.vuforia.Trackable;
 import com.vuforia.Tracker;
 import com.vuforia.TrackerManager;
-import com.vuforia.Vec2I;
-import com.vuforia.VideoBackgroundConfig;
 import com.vuforia.Vuforia;
 
 import java.util.ArrayList;
 
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.opengles.GL10;
 
 public class MainActivity extends Activity {
     ArrayList<String> mDataSetStrings = new ArrayList<String>();
     DataSet mDataset;
-    GLSurfaceView mGLView;
-    GLSurfaceView.Renderer mRenderer;
+    GLView mGLView;
+    GLRenderer mRenderer;
     ObjectTracker mObjectTracker;
     Activity mActivity;
     String licenceKey = "ATsUlQH/////AAAAmeFH2PdkqEWai6m8/mPhv5Qj9nWfD5KVKltkCzFeFfqJPNmUorPKkmqsr2Pk3h/DSPskgMG7CQauDqwMYZQOuXqZ/KPw50YzL0bnV1SkCEvPXiu33GIRJxFO71xdjdRcVlLuTaAeEyhd+45U08XfSKesbqbk2EnZpLyzo8vzIE+rldrwNbJh1yeDeyrMfFd0wzOFXvuwsEMqvZgu/mhJcR9+iKWkzwOVC2ePhc4xnY7pL+F4SUAm6BLDQr5OeQmujOaBtrzqRn9J/tGzCBMt/72uHh4aqoZFOp1YJpOFptHA/LrqnQt4uwMELv+hoO7eqZhk005Z8t8FxeL89T9ChTLPwvYP9KT5a92nSASKUHGF";
@@ -40,28 +32,15 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        int depthSize = 16;
+        int stencilSize = 0;
+        boolean translucent = Vuforia.requiresAlpha();
+
         //OpenGL View
-        mGLView = new GLSurfaceView(this);
-        mGLView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
-        mGLView.setEGLContextClientVersion(2);
-
-        mRenderer = new GLSurfaceView.Renderer() {
-            Renderer mVuforiaRenderer = Renderer.getInstance();
-
-            @Override
-            public void onSurfaceCreated(GL10 gl10, EGLConfig eglConfig) {
-            }
-
-            @Override
-            public void onSurfaceChanged(GL10 gl10, int i, int i1) {
-
-            }
-
-            @Override
-            public void onDrawFrame(GL10 gl10) {
-
-            }
-        };
+        mGLView = new GLView(this);
+        mGLView.init(translucent, depthSize, stencilSize);
+        mRenderer = new GLRenderer(this);
+        mRenderer.VideoBackgroundConfig();
 
         mGLView.setRenderer(mRenderer);
         addContentView(mGLView, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
@@ -69,6 +48,7 @@ public class MainActivity extends Activity {
         InitVuforiaTask initVuforiaTask = new InitVuforiaTask();
         initVuforiaTask.execute();
     }
+
 
     class InitVuforiaTask extends AsyncTask {
         @Override
@@ -143,9 +123,6 @@ public class MainActivity extends Activity {
         @Override
         protected Object doInBackground(Object[] objects) {
             //Camera init
-            VideoBackgroundConfig config = new VideoBackgroundConfig();
-            config.setEnabled(true);
-            config.setPosition(new Vec2I(0, 0));
 
             if(!CameraDevice.getInstance().init(CameraDevice.CAMERA_DIRECTION.CAMERA_DIRECTION_DEFAULT)) {
                 Log.e("camera", "error1");
@@ -159,8 +136,6 @@ public class MainActivity extends Activity {
                 Log.e("camera", "error3");
 
             }
-
-            Renderer.getInstance().setVideoBackgroundConfig(config);
 
             Log.e("camera", "camera succ");
             //Tracker start
