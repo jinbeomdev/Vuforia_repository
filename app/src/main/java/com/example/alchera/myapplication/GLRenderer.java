@@ -7,9 +7,11 @@ import android.opengl.GLSurfaceView;
 import android.util.Log;
 
 import com.vuforia.CameraDevice;
+import com.vuforia.Device;
 import com.vuforia.Renderer;
 import com.vuforia.Vec2I;
 import com.vuforia.VideoMode;
+import com.vuforia.Vuforia;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -24,16 +26,19 @@ public class GLRenderer implements GLSurfaceView.Renderer {
     private boolean mIsActive = false;
     public GLRenderer(Activity activity){
         mActivity=activity;
+        Device device = Device.getInstance();
+        device.setViewerActive(false); // Indicates if the app will be using a viewer, stereo mode and initializes the rendering primitives
+        device.setMode(Device.MODE.MODE_AR); // Select if we will be in AR or VR mode
     }
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        //surface가 생성될 떄 호출되는 callback
+        Vuforia.onSurfaceCreated();
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        //surface가 변결될 떄 호출되는 callback
+        Vuforia.onSurfaceChanged(width, height);
     }
 
     @Override
@@ -42,22 +47,19 @@ public class GLRenderer implements GLSurfaceView.Renderer {
 
     }
 
-
     public void setActive(boolean active) {
         mIsActive = active;
         if(mIsActive) VideoBackgroundConfig();
     }
 
     public void VideoBackgroundConfig(){
-
-
             com.vuforia.CameraDevice cameraDevice = CameraDevice.getInstance();
             com.vuforia.VideoMode vm = cameraDevice.getVideoMode(CameraDevice.MODE.MODE_DEFAULT);
 
             com.vuforia.VideoBackgroundConfig config = new com.vuforia.VideoBackgroundConfig();
             config.setEnabled(true);
             config.setPosition(new Vec2I(0, 0));
-
+            /*
             Point size = new Point();
             mActivity.getWindowManager().getDefaultDisplay().getRealSize(size);
             int xSize = 0, ySize = 0;
@@ -75,9 +77,8 @@ public class GLRenderer implements GLSurfaceView.Renderer {
                 ySize = (int) (width * (vm.getWidth() / (float) vm
                         .getHeight()));
             }
-            config.setSize(new Vec2I(xSize, ySize));
-            Log.i("screensize","vm"+vm.getHeight()+","+vm.getHeight()+"realsize"+xSize+","+ySize);
+            */
+            config.setSize(new Vec2I(500, 500));
             Renderer.getInstance().setVideoBackgroundConfig(config);
-
     }
 }

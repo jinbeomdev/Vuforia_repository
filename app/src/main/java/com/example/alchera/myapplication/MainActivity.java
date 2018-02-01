@@ -31,33 +31,25 @@ public class MainActivity extends Activity {
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        int depthSize = 16;
-        int stencilSize = 0;
-        boolean translucent = Vuforia.requiresAlpha();
-
-        //OpenGL View
-        mGLView = new GLView(this);
-        mGLView.init(translucent, depthSize, stencilSize);
-        mRenderer = new GLRenderer(this);
-        mRenderer.VideoBackgroundConfig();
-
-        mGLView.setRenderer(mRenderer);
-        addContentView(mGLView, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-
-        InitVuforiaTask initVuforiaTask = new InitVuforiaTask();
+        InitVuforiaTask initVuforiaTask = new InitVuforiaTask(this);
         initVuforiaTask.execute();
     }
 
 
     class InitVuforiaTask extends AsyncTask {
+        Activity mActivity;
+
+        public InitVuforiaTask(Activity mActivity) {
+            this.mActivity = mActivity;
+        }
+
         @Override
         protected Object doInBackground(Object[] objects) {
             //Vuforia init
             int mProgressValue = -1;
 
             int initFlag = INIT_FLAGS.GL_20;
-            Vuforia.setInitParameters(MainActivity.this, initFlag, licenceKey);
+            Vuforia.setInitParameters(mActivity, initFlag, licenceKey);
             do {
                 mProgressValue = Vuforia.init();
             }while(!isCancelled() && mProgressValue >= 0 && mProgressValue < 100);
@@ -74,12 +66,18 @@ public class MainActivity extends Activity {
 
         @Override
         protected void onPostExecute(Object o) {
-            InitTrackerTask initTrackerTask = new InitTrackerTask();
+            InitTrackerTask initTrackerTask = new InitTrackerTask(mActivity);
             initTrackerTask.execute();
         }
     }
 
     class InitTrackerTask extends  AsyncTask {
+        Activity mActivity;
+
+        public InitTrackerTask(Activity mActivity) {
+            this.mActivity = mActivity;
+        }
+
         @Override
         protected Object doInBackground(Object[] objects) {
             //Tracker init
@@ -93,12 +91,18 @@ public class MainActivity extends Activity {
 
         @Override
         protected void onPostExecute(Object o) {
-            LoadTrackerData loadTrackerData = new LoadTrackerData();
+            LoadTrackerData loadTrackerData = new LoadTrackerData(mActivity);
             loadTrackerData.execute();
         }
     }
 
     class LoadTrackerData extends  AsyncTask {
+        Activity mActivity;
+
+        public LoadTrackerData(Activity activity) {
+            mActivity = activity;
+        }
+
         @Override
         protected Object doInBackground(Object[] objects) {
             //Data load
@@ -114,6 +118,20 @@ public class MainActivity extends Activity {
 
         @Override
         protected void onPostExecute(Object o) {
+
+            int depthSize = 16;
+            int stencilSize = 0;
+            boolean translucent = Vuforia.requiresAlpha();
+
+            //OpenGL View
+            mGLView = new GLView(mActivity);
+            mGLView.init(translucent, depthSize, stencilSize);
+            mRenderer = new GLRenderer(mActivity);
+            mRenderer.VideoBackgroundConfig();
+
+            mGLView.setRenderer(mRenderer);
+            addContentView(mGLView, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
             StartCameraAndTracker startCameraAndTracker = new StartCameraAndTracker();
             startCameraAndTracker.execute();
         }
