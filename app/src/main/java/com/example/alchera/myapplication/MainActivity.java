@@ -31,6 +31,8 @@ public class MainActivity extends Activity {
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+
         InitVuforiaTask initVuforiaTask = new InitVuforiaTask(this);
         initVuforiaTask.execute();
     }
