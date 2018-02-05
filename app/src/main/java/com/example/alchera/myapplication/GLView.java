@@ -18,6 +18,8 @@ public class GLView extends GLSurfaceView {
     //ConfigChooser, ContextFactory, Renderer 생성히여 GLSurfaceView에 적용
     public void init(boolean translucent, int depth, int stencil) {
 
+        setEGLContextClientVersion(2);
+
             /*GLSurfaceView는 기본적으로 RGB_565의 알파값이 없는 surface생성
             만약 알파값이 존재하면 surface의 포맷을 PixelFormat.TRANSLUCENT로 설정
             SurfaceFlinger에 의해 32bit 알파값이 적용된 surface로 해석

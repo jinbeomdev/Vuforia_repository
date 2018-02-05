@@ -7,12 +7,14 @@ import android.opengl.GLSurfaceView;
 
 import android.opengl.Matrix;
 import android.util.Log;
+import android.view.View;
 
 import com.vuforia.COORDINATE_SYSTEM_TYPE;
 import com.vuforia.CameraDevice;
 import com.vuforia.Device;
 import com.vuforia.GLTextureData;
 import com.vuforia.GLTextureUnit;
+import com.vuforia.Matrix34F;
 import com.vuforia.Mesh;
 import com.vuforia.Renderer;
 import com.vuforia.RenderingPrimitives;
@@ -24,6 +26,7 @@ import com.vuforia.VIEW;
 import com.vuforia.Vec2I;
 import com.vuforia.Vec4I;
 import com.vuforia.VideoMode;
+import com.vuforia.ViewList;
 import com.vuforia.Vuforia;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -48,6 +51,7 @@ public class GLRenderer implements GLSurfaceView.Renderer {
     int mVertexTexCoord;
     int mProjectionMatrix;
     int mTexSampler2D;
+    int currentView = VIEW.VIEW_SINGULAR;
 
     public GLRenderer(Activity activity){
         //init Rendering
@@ -74,18 +78,33 @@ public class GLRenderer implements GLSurfaceView.Renderer {
         //program 객체를 생성한다
         mProgram = GLES20.glCreateProgram();
 
+        checkGLerror("glCreateProgram");
+
+
         //vertex shader를 program 객체에 추가
         GLES20.glAttachShader(mProgram, vertexShader);
 
+        checkGLerror("glAttachShader");
+
+
         //fragment shader를 program 객체에 추가
-        GLES20.glAttachShader(mProgram, vertexShader);
+        GLES20.glAttachShader(mProgram, fragmentShader);
+
+        checkGLerror("glAttachShader2");
+
 
         //program 객체를 OpenGL에 연결한다. program에 추가된 shader들이 Opengl에 연결된다
         GLES20.glLinkProgram(mProgram);
 
+        checkGLerror("glLinkProgram");
+
+
         /* 비디오 백그라운드를 위한 렌더링 설정 */
         //랜더링 상태(Render State)의 일부분으로 program을 추가한다.
         GLES20.glUseProgram(mProgram);
+
+        checkGLerror("glUseProgram");
+
 
         //프로그램으로 부터 Vertex Shader에서 texSampler2D에 대한 핸들러를 가져옴
         /*
@@ -98,9 +117,17 @@ public class GLRenderer implements GLSurfaceView.Renderer {
                     "uniform sampler2D texSampler2D;\n" +
          */
         mVertexPosition = GLES20.glGetAttribLocation(mProgram, "vertexPosition");
+        checkGLerror("glGetAttribLocation 120");
+
         mVertexTexCoord = GLES20.glGetAttribLocation(mProgram, "vertexTexCoord");
+        checkGLerror("glGetAttribLocation 123");
+
         mProjectionMatrix = GLES20.glGetUniformLocation(mProgram, "projectionMatrix");
+        checkGLerror("glGetUniformLocation 126");
+
         mTexSampler2D = GLES20.glGetUniformLocation(mProgram, "texSampler2D");
+        checkGLerror("glGetUniformLocation 129");
+
 
         GLES20.glUseProgram(0);
     }
@@ -117,76 +144,92 @@ public class GLRenderer implements GLSurfaceView.Renderer {
     public void onDrawFrame(GL10 gl) {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BITS);
 
-        mRenderer.begin();
+        State state;
+        state = TrackerManager.getInstance().getStateUpdater().updateState();
+
+        mRenderer.begin(state);
 
         if (Renderer.getInstance().getVideoBackgroundConfig().getReflection() == VIDEO_BACKGROUND_REFLECTION.VIDEO_BACKGROUND_REFLECTION_ON)
             GLES20.glFrontFace(GLES20.GL_CW);  // Front camera
         else
             GLES20.glFrontFace(GLES20.GL_CCW);   // Back camera
 
-        Vec4I viewport;
-        // Get the viewport for that specific view
-        viewport = mRenderingPrimitives.getViewport(VIEW.VIEW_SINGULAR);
-
-        // Set viewport for current view
-        GLES20.glViewport(viewport.getData()[0], viewport.getData()[1], viewport.getData()[2], viewport.getData()[3]);
-
-        // Set scissor
-        GLES20.glScissor(viewport.getData()[0], viewport.getData()[1], viewport.getData()[2], viewport.getData()[3]);
-
-        Log.d(TAG, "glViewport: " + viewport.getData()[0] + viewport.getData()[1] + viewport.getData()[2] + viewport.getData()[3] + "\n");
-        Log.d(TAG, "glScissor: " + viewport.getData()[0] + viewport.getData()[1] + viewport.getData()[2] + viewport.getData()[3] + "\n");
+        checkGLerror("136Line");
 
 
         int videoTextureUnit = 0;
         mVideoBackgroundTex.setTextureUnit(videoTextureUnit);
-        if (!mRenderer.updateVideoBackgroundTexture(mVideoBackgroundTex))
-        {
+
+        if (!mRenderer.updateVideoBackgroundTexture(mVideoBackgroundTex)) {
             Log.e(TAG, "Unable to update video background texture");
             return;
         }
 
-        Log.d(TAG, "enable to update video background texture");
-
-
         float[] vbProjectionMatrix = Tool.convert2GLMatrix(
-                mRenderingPrimitives.getVideoBackgroundProjectionMatrix(VIEW.VIEW_SINGULAR, COORDINATE_SYSTEM_TYPE.COORDINATE_SYSTEM_CAMERA)).getData();
-
+                mRenderingPrimitives.getVideoBackgroundProjectionMatrix(currentView, COORDINATE_SYSTEM_TYPE.COORDINATE_SYSTEM_CAMERA)).getData();
 
         GLES20.glDisable(GLES20.GL_DEPTH_TEST);
         GLES20.glDisable(GLES20.GL_CULL_FACE);
         GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
 
-        Mesh vbMesh = mRenderingPrimitives.getVideoBackgroundMesh(VIEW.VIEW_SINGULAR);
+        checkGLerror("150Line");
+
+        Mesh vbMesh = mRenderingPrimitives.getVideoBackgroundMesh(currentView);
+
+        checkGLerror("152Line");
+
+
         // Load the shader and upload the vertex/texcoord/index data
         GLES20.glUseProgram(mProgram);
         GLES20.glVertexAttribPointer(mVertexPosition, 3, GLES20.GL_FLOAT, false, 0, vbMesh.getPositions().asFloatBuffer());
         GLES20.glVertexAttribPointer(mVertexTexCoord, 2, GLES20.GL_FLOAT, false, 0, vbMesh.getUVs().asFloatBuffer());
 
+        checkGLerror("157Line");
+
+
         GLES20.glUniform1i(mTexSampler2D, videoTextureUnit);
+
+        checkGLerror("159Line");
+
 
         // Render the video background with the custom shader
         // First, we enable the vertex arrays
         GLES20.glEnableVertexAttribArray(mVertexPosition);
         GLES20.glEnableVertexAttribArray(mVertexTexCoord);
 
+        checkGLerror("164Line");
+
+
         // Pass the projection matrix to OpenGL
         GLES20.glUniformMatrix4fv(mProjectionMatrix, 1, false, vbProjectionMatrix, 0);
+
+        checkGLerror("167Line");
+
 
         // Then, we issue the render call
         GLES20.glDrawElements(GLES20.GL_TRIANGLES, vbMesh.getNumTriangles() * 3, GLES20.GL_UNSIGNED_SHORT,
                 vbMesh.getTriangles().asShortBuffer());
 
+        checkGLerror("171Line");
+
+
         // Finally, we disable the vertex arrays
         GLES20.glDisableVertexAttribArray(mVertexPosition);
         GLES20.glDisableVertexAttribArray(mVertexTexCoord);
 
+        checkGLerror("finish");
+
         mRenderer.end();
     }
 
-    public void setActive(boolean active) {
-        mIsActive = active;
-        if(mIsActive) VideoBackgroundConfig();
+    public void checkGLerror(String op) {
+        for (int error = GLES20.glGetError(); error != 0; error = GLES20
+                .glGetError())
+            Log.e(
+                    TAG,
+                    "After operation " + op + " glError 0x"
+                            + Integer.toHexString(error));
+
     }
 
     public void VideoBackgroundConfig(){
@@ -221,15 +264,21 @@ public class GLRenderer implements GLSurfaceView.Renderer {
             Log.d("GLRenderer", "width : " + vm.getWidth() + " , height:"  + vm.getHeight());
     }
 
-    public static int loadShader(int type, String shaderCode) {
+    public int loadShader(int type, String shaderCode) {
         //다음 2가지 타입 중 하나로 shader 객체를 생성한다
         int shader = GLES20.glCreateShader(type);
+
+        checkGLerror("273");
 
         //shader 객체에 shader code를 로드합니다
         GLES20.glShaderSource(shader, shaderCode);
 
+        checkGLerror("278");
+
         //shader 객체를 컴파일합니다.
         GLES20.glCompileShader(shader);
+
+        checkGLerror("283");
 
         return shader;
     }

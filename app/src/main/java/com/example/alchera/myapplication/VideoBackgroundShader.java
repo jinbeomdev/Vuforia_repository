@@ -15,15 +15,17 @@ public class VideoBackgroundShader {
 
                     "void main()\n" +
                     "{\n" +
-                    "   gl_Position = projectionMatrix * vertexPosition;\n" +
+                    "    gl_Position = projectionMatrix * vertexPosition;\n" +
+                    "    texCoord = vertexTexCoord;\n" +
                     "}\n";
 
     public static final String VB_FRAGMENT_SHADER =
             "precision mediump float;\n" +
-                    "varying vec2 textCoord\n" +
+                    "varying vec2 texCoord;\n" +
                     "uniform sampler2D texSampler2D;\n" +
-                    "void main()\n" +
+                    "void main ()\n" +
                     "{\n" +
-                    "   gl_FragColor = texture2D(texSampler2D, textCoord);\n" +
+                    "    gl_FragColor = texture2D(texSampler2D, texCoord);\n" +
                     "}\n";
 }
+
