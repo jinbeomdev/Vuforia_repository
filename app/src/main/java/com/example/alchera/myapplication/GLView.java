@@ -41,13 +41,13 @@ public class GLView extends GLSurfaceView {
 
     @Override
     public void onPause() {
+        super.onPause();
         setVisibility(View.INVISIBLE);
-        onPause();
     }
 
     @Override
     public void onResume() {
+        super.onResume();
         setVisibility(View.VISIBLE);
-        onResume();
     }
 }

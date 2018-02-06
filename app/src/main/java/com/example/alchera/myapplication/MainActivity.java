@@ -2,7 +2,6 @@ package com.example.alchera.myapplication;
 
 import android.app.Activity;
 import android.content.res.Configuration;
-import android.opengl.GLSurfaceView;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -75,14 +74,23 @@ public class MainActivity extends Activity {
 
         Vuforia.onResume();
     }
+    */
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
 
+        CameraDevice.getInstance().stop();
+        CameraDevice.getInstance().deinit();
+
+        mGLView.onPause();
+
+        mObjectTracker.stop();
+
         Vuforia.deinit();
+
+        mIsVuforiaInit = false;
     }
-    */
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
@@ -117,6 +125,8 @@ public class MainActivity extends Activity {
             if(!result) {
                 Log.d(LOGTAG, "failed to initialize Vuforia");
             }
+
+            mIsVuforiaInit = true;
 
             InitTrackerTask initTrackerTask = new InitTrackerTask(mActivity);
             initTrackerTask.execute();

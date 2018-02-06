@@ -127,7 +127,7 @@ public class GLRenderer implements GLSurfaceView.Renderer {
             GLES20.glFrontFace(GLES20.GL_CCW);   // Back camera
 
         //TODO : 이 부분 에러 해결해야 할 듯
-        checkGLerror("136Line");
+        //checkGLerror("136Line");
 
         renderFrame(state);
 
@@ -151,53 +151,30 @@ public class GLRenderer implements GLSurfaceView.Renderer {
         GLES20.glDisable(GLES20.GL_CULL_FACE);
         GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
 
-        checkGLerror("150Line");
-
         Mesh vbMesh = mRenderingPrimitives.getVideoBackgroundMesh(currentView);
-
-        checkGLerror("152Line");
-
 
         // Load the shader and upload the vertex/texcoord/index data
         GLES20.glUseProgram(mProgram);
         GLES20.glVertexAttribPointer(mVertexPosition, 3, GLES20.GL_FLOAT, false, 0, vbMesh.getPositions().asFloatBuffer());
         GLES20.glVertexAttribPointer(mVertexTexCoord, 2, GLES20.GL_FLOAT, false, 0, vbMesh.getUVs().asFloatBuffer());
 
-        checkGLerror("157Line");
-
-
         GLES20.glUniform1i(mTexSampler2D, videoTextureUnit);
-
-        checkGLerror("159Line");
-
 
         // Render the video background with the custom shader
         // First, we enable the vertex arrays
         GLES20.glEnableVertexAttribArray(mVertexPosition);
         GLES20.glEnableVertexAttribArray(mVertexTexCoord);
 
-        checkGLerror("164Line");
-
-
         // Pass the projection matrix to OpenGL
         GLES20.glUniformMatrix4fv(mProjectionMatrix, 1, false, vbProjectionMatrix, 0);
-
-        checkGLerror("167Line");
-
 
         // Then, we issue the render call
         GLES20.glDrawElements(GLES20.GL_TRIANGLES, vbMesh.getNumTriangles() * 3, GLES20.GL_UNSIGNED_SHORT,
                 vbMesh.getTriangles().asShortBuffer());
 
-        checkGLerror("171Line");
-
-
         // Finally, we disable the vertex arrays
         GLES20.glDisableVertexAttribArray(mVertexPosition);
         GLES20.glDisableVertexAttribArray(mVertexTexCoord);
-
-        checkGLerror("finish");
-
     }
 
     public void renderFrame(State state)
@@ -235,9 +212,6 @@ public class GLRenderer implements GLSurfaceView.Renderer {
         //rawProjectionMatrixGL과 eyeAdjustmentGL 곱하여 projectionMatrix에 저장
         // Apply the adjustment to the projection matrix
         Matrix.multiplyMM(projectionMatrix, 0, rawProjectionMatrixGL, 0, eyeAdjustmentGL, 0);
-
-        Log.v(TAG,"Matrix setting");
-
 
         try{
             mCube = new Cube();
@@ -277,8 +251,6 @@ public class GLRenderer implements GLSurfaceView.Renderer {
             }
         }
     }
-
-
 
     public void checkGLerror(String op) {
         for (int error = GLES20.glGetError(); error != 0; error = GLES20
