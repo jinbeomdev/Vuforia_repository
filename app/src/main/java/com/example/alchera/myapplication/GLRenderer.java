@@ -56,7 +56,7 @@ public class GLRenderer implements GLSurfaceView.Renderer {
     int mProjectionMatrix;
     int mTexSampler2D;
     int currentView = VIEW.VIEW_SINGULAR;
-    private static float OBJECT_SCALE_FLOAT = 0.003f;
+    private static float OBJECT_SCALE_FLOAT = 0.03f;
     private Cube mCube;
     public GLRenderer(Activity activity){
         //init Rendering
@@ -322,24 +322,21 @@ public class GLRenderer implements GLSurfaceView.Renderer {
 
             Matrix.translateM(modelViewMatrix, 0, 0.0f, 0.0f,0.0f);
 
-            Matrix.scaleM(modelViewMatrix, 0, OBJECT_SCALE_FLOAT,
-                    OBJECT_SCALE_FLOAT, OBJECT_SCALE_FLOAT);
+            Matrix.scaleM(modelViewMatrix, 0, OBJECT_SCALE_FLOAT/3,
+                    OBJECT_SCALE_FLOAT/3, OBJECT_SCALE_FLOAT/3);
 
             Matrix.multiplyMM(modelViewProjection, 0, projectionMatrix, 0, modelViewMatrix, 0);
-            Log.e(TAG,"target found ");
             try{
                 mCube.draw(modelViewProjection);
-                checkGLerror("drawing cube");
             }
             catch (Exception e){
                 e.printStackTrace(System.err);
                 System.exit(1);
             }
         }
-        GLES20.glDisable(GLES20.GL_DEPTH_TEST);
     }
 
-    // @TODO Bad...
+//    // @TODO Bad...
 //    private void renderAugmentation(TrackableResult trackableResult, float[] projectionMatrix, float[] imagesize)
 //    {
 //        Log.v(TAG,"Rendering start ");
