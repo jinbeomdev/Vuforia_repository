@@ -1,6 +1,7 @@
 package com.example.alchera.myapplication;
 
 import android.app.Activity;
+import android.content.res.Configuration;
 import android.graphics.Point;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
@@ -44,9 +45,7 @@ import javax.microedition.khronos.opengles.GL10;
 public class GLRenderer implements GLSurfaceView.Renderer {
 
     private final String TAG = "GLRenderer";
-
     private Activity mActivity = null;
-    private boolean mIsActive = false;
     private Renderer mRenderer = null;
     RenderingPrimitives mRenderingPrimitives = null;
     GLTextureUnit mVideoBackgroundTex = null;
@@ -58,6 +57,8 @@ public class GLRenderer implements GLSurfaceView.Renderer {
     int currentView = VIEW.VIEW_SINGULAR;
     private static float OBJECT_SCALE_FLOAT = 0.003f;
     private Cube mCube;
+    private boolean mIsPortrait = false;
+
     public GLRenderer(Activity activity){
         //init Rendering
         mActivity=activity;
@@ -74,8 +75,6 @@ public class GLRenderer implements GLSurfaceView.Renderer {
 
         mVideoBackgroundTex = new GLTextureUnit();
 
-        //init Rendering
-
         //shader 생성
         int vertexShader = loadShader(GLES20.GL_VERTEX_SHADER, VideoBackgroundShader.VB_VERTEX_SHADER);
         int fragmentShader = loadShader(GLES20.GL_FRAGMENT_SHADER, VideoBackgroundShader.VB_FRAGMENT_SHADER);
@@ -83,56 +82,24 @@ public class GLRenderer implements GLSurfaceView.Renderer {
         //program 객체를 생성한다
         mProgram = GLES20.glCreateProgram();
 
-        checkGLerror("glCreateProgram");
-
-
         //vertex shader를 program 객체에 추가
         GLES20.glAttachShader(mProgram, vertexShader);
-
-        checkGLerror("glAttachShader");
-
 
         //fragment shader를 program 객체에 추가
         GLES20.glAttachShader(mProgram, fragmentShader);
 
-        checkGLerror("glAttachShader2");
-
-
         //program 객체를 OpenGL에 연결한다. program에 추가된 shader들이 Opengl에 연결된다
         GLES20.glLinkProgram(mProgram);
-
-        checkGLerror("glLinkProgram");
-
 
         /* 비디오 백그라운드를 위한 렌더링 설정 */
         //랜더링 상태(Render State)의 일부분으로 program을 추가한다.
         GLES20.glUseProgram(mProgram);
 
-        checkGLerror("glUseProgram");
-
-
         //프로그램으로 부터 Vertex Shader에서 texSampler2D에 대한 핸들러를 가져옴
-        /*
-                    "attribute vec4 vertexPosition;\n" +
-                    "attribute vec2 vertexTexCoord;\n" +
-                    "uniform mat4 projectionMatrix;\n" +
-                    "varying vec2 texCoord;\n" +
-
-                    "varying vec2 textCoord\n" +
-                    "uniform sampler2D texSampler2D;\n" +
-         */
         mVertexPosition = GLES20.glGetAttribLocation(mProgram, "vertexPosition");
-        checkGLerror("glGetAttribLocation 120");
-
         mVertexTexCoord = GLES20.glGetAttribLocation(mProgram, "vertexTexCoord");
-        checkGLerror("glGetAttribLocation 123");
-
         mProjectionMatrix = GLES20.glGetUniformLocation(mProgram, "projectionMatrix");
-        checkGLerror("glGetUniformLocation 126");
-
         mTexSampler2D = GLES20.glGetUniformLocation(mProgram, "texSampler2D");
-        checkGLerror("glGetUniformLocation 129");
-
 
         GLES20.glUseProgram(0);
     }
@@ -159,17 +126,14 @@ public class GLRenderer implements GLSurfaceView.Renderer {
         else
             GLES20.glFrontFace(GLES20.GL_CCW);   // Back camera
 
+        //TODO : 이 부분 에러 해결해야 할 듯
         checkGLerror("136Line");
-
-
 
         renderFrame(state);
 
         mRenderer.end();
-
-
-
     }
+
     public void renderVideoBackground()
     {
         int videoTextureUnit = 0;
@@ -381,53 +345,72 @@ public class GLRenderer implements GLSurfaceView.Renderer {
 
     }
 
-    public void VideoBackgroundConfig(){
-            com.vuforia.CameraDevice cameraDevice = CameraDevice.getInstance();
-            com.vuforia.VideoMode vm = cameraDevice.getVideoMode(CameraDevice.MODE.MODE_DEFAULT);
+    public void VideoBackgroundConfig() {
+        com.vuforia.CameraDevice cameraDevice = CameraDevice.getInstance();
+        com.vuforia.VideoMode vm = cameraDevice.getVideoMode(CameraDevice.MODE.MODE_DEFAULT);
 
-            com.vuforia.VideoBackgroundConfig config = new com.vuforia.VideoBackgroundConfig();
-            config.setEnabled(true);
-            config.setPosition(new Vec2I(0, 0));
+        com.vuforia.VideoBackgroundConfig config = new com.vuforia.VideoBackgroundConfig();
+        config.setEnabled(true);
+        config.setPosition(new Vec2I(0, 0));
+
+        Configuration orientation = mActivity.getResources().getConfiguration();
+        switch (orientation.orientation) {
+            case Configuration.ORIENTATION_PORTRAIT:
+                mIsPortrait = true;
+                break;
+            case Configuration.ORIENTATION_LANDSCAPE:
+                mIsPortrait = false;
+                break;
+            case Configuration.ORIENTATION_UNDEFINED:
+            default:
+                break;
+        }
 
 
-            Point size = new Point();
-            mActivity.getWindowManager().getDefaultDisplay().getRealSize(size);
-            int xSize = 0, ySize = 0;
+        Point size = new Point();
+        mActivity.getWindowManager().getDefaultDisplay().getRealSize(size);
+        int xSize = 0, ySize = 0;
 
-            int width = size.x;
-            int height = size.y;
+        int width = size.x;
+        int height = size.y;
 
+
+        if(mIsPortrait) {
             xSize = (int) (vm.getHeight() * (height / (float) vm
                     .getWidth()));
             ySize = height;
 
-            if (xSize < width)
-            {
+            if (xSize < width) {
                 xSize = height;
                 ySize = (int) (width * (vm.getWidth() / (float) vm
                         .getHeight()));
             }
+        } else {
+            xSize = width;
+            ySize = (int) (vm.getHeight() * (width / (float) vm
+                    .getWidth()));
 
-            config.setSize(new Vec2I(xSize, ySize));
-            Renderer.getInstance().setVideoBackgroundConfig(config);
-            Log.d("GLRenderer", "width : " + vm.getWidth() + " , height:"  + vm.getHeight());
+            if (ySize < height)
+            {
+                xSize = (int) (height * (vm.getWidth() / (float) vm
+                        .getHeight()));
+                ySize = height;
+            }
+        }
+
+        config.setSize(new Vec2I(xSize, ySize));
+        Renderer.getInstance().setVideoBackgroundConfig(config);
     }
 
     public int loadShader(int type, String shaderCode) {
         //다음 2가지 타입 중 하나로 shader 객체를 생성한다
         int shader = GLES20.glCreateShader(type);
 
-        checkGLerror("273");
-
         //shader 객체에 shader code를 로드합니다
         GLES20.glShaderSource(shader, shaderCode);
 
-        checkGLerror("278");
-
         //shader 객체를 컴파일합니다.
         GLES20.glCompileShader(shader);
-
-        checkGLerror("283");
 
         return shader;
     }

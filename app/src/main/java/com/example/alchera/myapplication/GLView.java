@@ -3,6 +3,7 @@ package com.example.alchera.myapplication;
 import android.content.Context;
 import android.graphics.PixelFormat;
 import android.opengl.GLSurfaceView;
+import android.view.View;
 
 /**
  * Created by alchera on 18. 2. 1.
@@ -40,11 +41,13 @@ public class GLView extends GLSurfaceView {
 
     @Override
     public void onPause() {
-        super.onPause();;
-    }
-    @Override
-    public void onResume() {
-        super.onResume();
+        setVisibility(View.INVISIBLE);
+        onPause();
     }
 
+    @Override
+    public void onResume() {
+        setVisibility(View.VISIBLE);
+        onResume();
+    }
 }

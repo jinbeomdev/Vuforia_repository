@@ -1,6 +1,7 @@
 package com.example.alchera.myapplication;
 
 import android.app.Activity;
+import android.content.res.Configuration;
 import android.opengl.GLSurfaceView;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -9,6 +10,7 @@ import android.view.ViewGroup;
 
 import com.vuforia.CameraDevice;
 import com.vuforia.DataSet;
+import com.vuforia.Device;
 import com.vuforia.INIT_FLAGS;
 import com.vuforia.ObjectTracker;
 import com.vuforia.STORAGE_TYPE;
@@ -21,24 +23,75 @@ import java.util.ArrayList;
 
 
 public class MainActivity extends Activity {
+    public static final String LOGTAG = "MainActivity";
+    String licenceKey = "ATsUlQH/////AAAAmeFH2PdkqEWai6m8/mPhv5Qj9nWfD5KVKltkCzFeFfqJPNmUorPKkmqsr2Pk3h/DSPskgMG7CQauDqwMYZQOuXqZ/KPw50YzL0bnV1SkCEvPXiu33GIRJxFO71xdjdRcVlLuTaAeEyhd+45U08XfSKesbqbk2EnZpLyzo8vzIE+rldrwNbJh1yeDeyrMfFd0wzOFXvuwsEMqvZgu/mhJcR9+iKWkzwOVC2ePhc4xnY7pL+F4SUAm6BLDQr5OeQmujOaBtrzqRn9J/tGzCBMt/72uHh4aqoZFOp1YJpOFptHA/LrqnQt4uwMELv+hoO7eqZhk005Z8t8FxeL89T9ChTLPwvYP9KT5a92nSASKUHGF";
+
+    private boolean mIsVuforiaInit = false;
+
+    ObjectTracker mObjectTracker;
+
     ArrayList<String> mDataSetStrings = new ArrayList<String>();
     DataSet mDataset;
+
     GLView mGLView;
     GLRenderer mRenderer;
-    ObjectTracker mObjectTracker;
-    Activity mActivity;
-    String licenceKey = "ATsUlQH/////AAAAmeFH2PdkqEWai6m8/mPhv5Qj9nWfD5KVKltkCzFeFfqJPNmUorPKkmqsr2Pk3h/DSPskgMG7CQauDqwMYZQOuXqZ/KPw50YzL0bnV1SkCEvPXiu33GIRJxFO71xdjdRcVlLuTaAeEyhd+45U08XfSKesbqbk2EnZpLyzo8vzIE+rldrwNbJh1yeDeyrMfFd0wzOFXvuwsEMqvZgu/mhJcR9+iKWkzwOVC2ePhc4xnY7pL+F4SUAm6BLDQr5OeQmujOaBtrzqRn9J/tGzCBMt/72uHh4aqoZFOp1YJpOFptHA/LrqnQt4uwMELv+hoO7eqZhk005Z8t8FxeL89T9ChTLPwvYP9KT5a92nSASKUHGF";
+
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-
-        InitVuforiaTask initVuforiaTask = new InitVuforiaTask(this);
-        initVuforiaTask.execute();
+        if(mIsVuforiaInit) {
+            Log.d(LOGTAG, "Vuforia is already initialized");
+        } else {
+            InitVuforiaTask initVuforiaTask = new InitVuforiaTask(this);
+            initVuforiaTask.execute();
+        }
     }
 
+    /*
+    TODO : android life-cycle에 맞춰서 Vuforia, OpenGL, Camera을 작동시켜야 한다.
+    Vuforia -> Tracker -> OpenGL -> Camera 순으로 초기화했으니
+    Camera _> OpenGL -> Tracker -> Vuforia deinit하는게 맞을 것 같다.
+     */
+    @Override
+    protected void onPause() {
+        super.onPause();
 
-    class InitVuforiaTask extends AsyncTask {
+        CameraDevice.getInstance().stop();
+        CameraDevice.getInstance().deinit();
+
+        mGLView.onPause();
+
+        mObjectTracker.stop();
+
+        Vuforia.onPause();
+    }
+
+    /*
+    TODO : onResume(), onDestory() 구현
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        Vuforia.onResume();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        Vuforia.deinit();
+    }
+    */
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        Device.getInstance().setConfigurationChanged();
+    }
+
+    class InitVuforiaTask extends AsyncTask<Void, Integer, Boolean> {
         Activity mActivity;
 
         public InitVuforiaTask(Activity mActivity) {
@@ -46,7 +99,7 @@ public class MainActivity extends Activity {
         }
 
         @Override
-        protected Object doInBackground(Object[] objects) {
+        protected Boolean doInBackground(Void... params) {
             //Vuforia init
             int mProgressValue = -1;
 
@@ -56,18 +109,15 @@ public class MainActivity extends Activity {
                 mProgressValue = Vuforia.init();
             }while(!isCancelled() && mProgressValue >= 0 && mProgressValue < 100);
 
-            if(mProgressValue == -1) {
-                Log.e("hate", "init fail");
-            }
-
-            if(mProgressValue == 100) {
-                Log.e("init succ", "init succ");
-            }
-            return null;
+            return (mProgressValue > 0);
         }
 
         @Override
-        protected void onPostExecute(Object o) {
+        protected void onPostExecute(Boolean result) {
+            if(!result) {
+                Log.d(LOGTAG, "failed to initialize Vuforia");
+            }
+
             InitTrackerTask initTrackerTask = new InitTrackerTask(mActivity);
             initTrackerTask.execute();
         }
