@@ -108,7 +108,8 @@ public class MainActivity extends Activity {
         @Override
         protected Object doInBackground(Object[] objects) {
             //Data load
-            mDataSetStrings.add("MyApplication.xml");
+           // mDataSetStrings.add("MyApplication.xml");
+            mDataSetStrings.add("StonesAndChips.xml");
             TrackerManager tManager = TrackerManager.getInstance();
             mObjectTracker = (ObjectTracker) tManager.getTracker(ObjectTracker.getClassType());
             mDataset = mObjectTracker.createDataSet();
