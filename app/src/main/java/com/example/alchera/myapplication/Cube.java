@@ -10,7 +10,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
-import java.util.Arrays;
 
 public class Cube {
     public FloatBuffer vertexBuffer;
@@ -20,15 +19,14 @@ public class Cube {
 
 
     static final int COORDS_PER_VERTEX = 3;
+    static final int COLORS_PER_VERTEX = 4;
     private final int vertexStride = COORDS_PER_VERTEX * 4;
-
+    private final int colorStride = COLORS_PER_VERTEX *4;
 
     public static final String vertexShaderCode = " \n" + "\n"
             + "attribute vec4 vPosition; \n"
-            + "attribute vec2 vertexTexCoord; \n" + "\n"
             + "attribute vec4 aColor; \n"
             + "varying vec4 vColor; \n"
-            + "varying vec2 texCoord; \n" + "\n"
             + "uniform mat4 uMVPMatrix; \n" + "\n"
             + "void main() \n" + "{ \n"
             + "   vColor = aColor;"
@@ -38,9 +36,7 @@ public class Cube {
 
     public static final String fragmentShaderCode = " \n" + "\n"
             + "precision mediump float; \n" + " \n"
-            + "varying vec2 texCoord; \n"
             + "varying vec4 vColor; \n" + " \n"
-            + "uniform sampler2D texSampler2D; \n" + " \n"
             + "void main() \n"
             + "{ \n" + "   gl_FragColor = vColor; \n"
             + "} \n";
@@ -49,7 +45,6 @@ public class Cube {
     private int mPositionHandle;
     private int mColorHandle;
     private int mMVPMatrixHandle;
-    private int mNormalHandle;
     private final int mProgram2;
 
     static float[] vertices = {
@@ -86,7 +81,7 @@ public class Cube {
 
     //정점 배열의 정점 인덱스를 이용하여 각 면마다 2개의 삼각형(ccw)를 구성
     static short[] indices={
-            0, 2, 1, 0, 3, 2, // front
+            0, 1, 2, 0, 2, 3, // front
             4, 6, 5, 4, 7, 6, //back
             8, 9, 10, 8, 10, 11, //left
             12, 14, 13, 12, 15, 14, //right
@@ -94,7 +89,7 @@ public class Cube {
             20, 22, 21, 20, 23, 22//bottom
     };
 
-    float[] colors = {
+    static float[] colors = {
             0.0f,  1.0f,  0.0f,  1.0f,
             0.0f,  1.0f,  0.0f,  1.0f,
             1.0f,  0.5f,  0.0f,  1.0f,
@@ -105,6 +100,10 @@ public class Cube {
             1.0f,  0.0f,  0.0f,  1.0f
     };
 
+    static float[] normals =
+    {
+
+    };
 
     public Cube() throws Exception {
         ByteBuffer vbb = ByteBuffer.allocateDirect(vertices.length*4);
@@ -167,8 +166,9 @@ public class Cube {
         GLES20.glEnableVertexAttribArray(mPositionHandle);
 
         mColorHandle = GLES20.glGetAttribLocation(mProgram2, "aColor");
-        GLES20.glVertexAttribPointer(mColorHandle, 4, GLES20.GL_FLOAT,
-                false, 0, colorBuffer);
+        GLES20.glVertexAttribPointer(mColorHandle, COLORS_PER_VERTEX,
+                GLES20.GL_FLOAT, false,
+                4, colorBuffer);
         GLES20.glEnableVertexAttribArray(mColorHandle);
 
         mMVPMatrixHandle = GLES20.glGetUniformLocation(mProgram2, "uMVPMatrix");

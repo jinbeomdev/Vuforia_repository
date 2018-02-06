@@ -239,13 +239,6 @@ public class GLRenderer implements GLSurfaceView.Renderer {
         Log.v(TAG,"Matrix setting");
 
 
-        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-
-        // handle face culling, we need to detect if we are using reflection
-        // to determine the direction of the culling
-        GLES20.glEnable(GLES20.GL_CULL_FACE);
-        GLES20.glCullFace(GLES20.GL_BACK);
-
         try{
             mCube = new Cube();
         }
@@ -255,26 +248,6 @@ public class GLRenderer implements GLSurfaceView.Renderer {
             System.exit(1);
         }
 
-
-//        if(state.getNumTrackableResults()>0) {
-//            TrackableResult trackableResult = state.getTrackableResult(0);
-//            Trackable trackable = trackableResult.getTrackable();
-//
-//            ObjectTarget imageTarget = (ObjectTarget) trackable;
-//            float[] imageSize = imageTarget.getSize().getData();
-//
-//            if(trackableResult == null)
-//            {
-//                Log.e(TAG,"no target");
-//                return;
-//            }
-//            Log.e(TAG,"yes target");
-//            renderAugmentation(trackableResult, projectionMatrix, imageSize);
-//        }
-//        else
-//        {
-//            Log.e(TAG,""+state.getNumTrackableResults());
-//        }
         for(int tIdx = 0; tIdx < state.getNumTrackableResults();tIdx++){
             TrackableResult result = state.getTrackableResult(tIdx);
             Trackable trackable = result.getTrackable();
@@ -284,56 +257,28 @@ public class GLRenderer implements GLSurfaceView.Renderer {
 
             float[] modelViewProjection = new float[16];
 
-            Matrix.translateM(modelViewMatrix, 0, 0.0f, 0.0f,0.0f);
+            ObjectTarget imageTarget = (ObjectTarget) trackable;
+            float[] imageSize = imageTarget.getSize().getData();
+            OBJECT_SCALE_FLOAT = imageSize[0]/2;
 
-            Matrix.scaleM(modelViewMatrix, 0, OBJECT_SCALE_FLOAT,
-                    OBJECT_SCALE_FLOAT, OBJECT_SCALE_FLOAT);
+            Matrix.translateM(modelViewMatrix, 0, 0.0f, 0.0f,OBJECT_SCALE_FLOAT/2);
+
+            Matrix.scaleM(modelViewMatrix, 0, OBJECT_SCALE_FLOAT/3,
+                    OBJECT_SCALE_FLOAT/3, OBJECT_SCALE_FLOAT/3);
 
             Matrix.multiplyMM(modelViewProjection, 0, projectionMatrix, 0, modelViewMatrix, 0);
-            Log.e(TAG,"target found ");
-            try{
+
+            Log.e(TAG,"target found");
+            try {
                 mCube.draw(modelViewProjection);
-                checkGLerror("drawing cube");
-            }
-            catch (Exception e){
-                e.printStackTrace(System.err);
-                System.exit(1);
+                Log.e(TAG,"cube rendering");
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
-        GLES20.glDisable(GLES20.GL_DEPTH_TEST);
     }
 
-    // @TODO Bad...
-//    private void renderAugmentation(TrackableResult trackableResult, float[] projectionMatrix, float[] imagesize)
-//    {
-//        Log.v(TAG,"Rendering start ");
-//
-//
-//        int textureIndex = 1;
-//        OBJECT_SCALE_FLOAT = imagesize[0];
-//        // deal with the modelview and projection matrices
-//        float[] modelViewProjection = new float[16];
-//        float[] modelViewProjectionScaled = new float[16];
-//
-//
-//        Matrix.translateM(modelViewMatrix, 0, 0.0f, 0.0f,0.0f);
-//
-//
-//        Matrix.scaleM(modelViewMatrix, 0, OBJECT_SCALE_FLOAT/3,
-//                OBJECT_SCALE_FLOAT/3, OBJECT_SCALE_FLOAT/3);
-//
-//        Matrix.multiplyMM(modelViewProjection, 0, projectionMatrix, 0, modelViewMatrix, 0);
-//        Log.v(TAG,"Rendering end ");
-//
-//        try{
-//            mCube.draw(modelViewProjection);
-//        }
-//        catch (Exception e){
-//            e.printStackTrace(System.err);
-//            System.exit(1);
-//        }
-//
-//    }
+
 
     public void checkGLerror(String op) {
         for (int error = GLES20.glGetError(); error != 0; error = GLES20
