@@ -73,7 +73,7 @@ public class GLRenderer implements GLSurfaceView.Renderer {
 
         //shader 생성
         int vertexShader = loadShader(GLES20.GL_VERTEX_SHADER, VideoBackgroundShader.VB_VERTEX_SHADER);
-        int fragmentShader = loadShader(GLES20.GL_VERTEX_SHADER, VideoBackgroundShader.VB_FRAGMENT_SHADER);
+        int fragmentShader = loadShader(GLES20.GL_FRAMEBUFFER, VideoBackgroundShader.VB_FRAGMENT_SHADER);
 
         //program 객체를 생성한다
         mProgram = GLES20.glCreateProgram();
