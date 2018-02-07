@@ -90,14 +90,36 @@ public class Cube {
     };
 
     static float[] colors = {
-            0.0f,  1.0f,  0.0f,  1.0f,
-            0.0f,  1.0f,  0.0f,  1.0f,
-            1.0f,  0.5f,  0.0f,  1.0f,
-            1.0f,  0.5f,  0.0f,  1.0f,
-            1.0f,  0.0f,  0.0f,  1.0f,
-            1.0f,  0.0f,  0.0f,  1.0f,
-            1.0f,  0.0f,  0.0f,  1.0f,
-            1.0f,  0.0f,  0.0f,  1.0f
+
+            1.0f, 0.0f, 0.0f, 1.0f, // red    - face0
+            0.0f, 1.0f, 1.0f, 1.0f,//              0
+            0.0f, 1.0f, 0.0f, 1.0f,//              0
+            1.0f, 1.0f, 0.0f, 1.0f,//              0
+
+            0.0f, 1.0f, 1.0f, 1.0f,// cyan   - face1
+            0.0f, 1.0f, 1.0f, 1.0f,//              1
+            0.0f, 1.0f, 1.0f, 1.0f,//              1
+            0.0f, 1.0f, 1.0f, 1.0f,//              1
+
+            0.0f, 1.0f, 0.0f, 1.0f,// green  - face2
+            0.0f, 1.0f, 0.0f, 1.0f,//              2
+            0.0f, 1.0f, 0.0f, 1.0f,//              2
+            0.0f, 1.0f, 0.0f, 1.0f,//              2
+
+            1.0f, 0.0f, 1.0f, 1.0f,// violet - face3
+            1.0f, 0.0f, 1.0f, 1.0f,//              3
+            1.0f, 0.0f, 1.0f, 1.0f,//              3
+            1.0f, 0.0f, 1.0f, 1.0f,//              3
+
+            0.0f, 0.0f, 1.0f, 1.0f,// blue   - face4
+            0.0f, 0.0f, 1.0f, 1.0f,//              4
+            0.0f, 0.0f, 1.0f, 1.0f,//              4
+            0.0f, 0.0f, 1.0f, 1.0f,//              4
+
+            1.0f, 1.0f, 0.0f, 1.0f,// yellow - face5
+            1.0f, 1.0f, 0.0f, 1.0f,//              5
+            1.0f, 1.0f, 0.0f, 1.0f,//              5
+            1.0f, 1.0f, 0.0f, 1.0f,//              5
     };
 
     static float[] normals =
@@ -159,17 +181,19 @@ public class Cube {
 
         GLES20.glUseProgram(mProgram2);
 
+        mColorHandle = GLES20.glGetAttribLocation(mProgram2, "aColor");
+        GLES20.glVertexAttribPointer(mColorHandle, COLORS_PER_VERTEX,
+                GLES20.GL_FLOAT, false,
+                colorStride, colorBuffer);
+        GLES20.glEnableVertexAttribArray(mColorHandle);
+
+
         mPositionHandle = GLES20.glGetAttribLocation(mProgram2, "vPosition");
         GLES20.glVertexAttribPointer(mPositionHandle, COORDS_PER_VERTEX,
                 GLES20.GL_FLOAT, false,
                 vertexStride, vertexBuffer);
         GLES20.glEnableVertexAttribArray(mPositionHandle);
-
-        mColorHandle = GLES20.glGetAttribLocation(mProgram2, "aColor");
-        GLES20.glVertexAttribPointer(mColorHandle, COLORS_PER_VERTEX,
-                GLES20.GL_FLOAT, false,
-                4, colorBuffer);
-        GLES20.glEnableVertexAttribArray(mColorHandle);
+        mMVPMatrixHandle = GLES20.glGetUniformLocation(mProgram2, "uMVPMatrix");
 
         mMVPMatrixHandle = GLES20.glGetUniformLocation(mProgram2, "uMVPMatrix");
 
