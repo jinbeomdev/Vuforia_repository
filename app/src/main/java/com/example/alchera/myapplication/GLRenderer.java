@@ -7,6 +7,7 @@ import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 
 import android.opengl.Matrix;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
 
@@ -114,7 +115,7 @@ public class GLRenderer implements GLSurfaceView.Renderer {
 
     @Override
     public void onDrawFrame(GL10 gl) {
-        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BITS);
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
         State state;
         state = TrackerManager.getInstance().getStateUpdater().updateState();
@@ -222,6 +223,13 @@ public class GLRenderer implements GLSurfaceView.Renderer {
             System.exit(1);
         }
 
+        long time = SystemClock.uptimeMillis() % 1000;
+        float angleInDegrees = (360.0f / 1000.0f ) * ((int) time);
+
+
+        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+        GLES20.glEnable(GLES20.GL_CULL_FACE);
+        GLES20.glCullFace(GLES20.GL_BACK);
         for(int tIdx = 0; tIdx < state.getNumTrackableResults();tIdx++){
             TrackableResult result = state.getTrackableResult(tIdx);
             Trackable trackable = result.getTrackable();
@@ -235,10 +243,12 @@ public class GLRenderer implements GLSurfaceView.Renderer {
             float[] imageSize = imageTarget.getSize().getData();
             OBJECT_SCALE_FLOAT = imageSize[0]/2;
 
-            Matrix.translateM(modelViewMatrix, 0, 0.0f, 0.0f,OBJECT_SCALE_FLOAT/2);
+            Matrix.translateM(modelViewMatrix, 0, 0.0f, 0.0f,OBJECT_SCALE_FLOAT);
 
             Matrix.scaleM(modelViewMatrix, 0, OBJECT_SCALE_FLOAT/3,
                     OBJECT_SCALE_FLOAT/3, OBJECT_SCALE_FLOAT/3);
+
+            Matrix.rotateM(modelViewMatrix, 0, angleInDegrees, 0.0f, 2.0f, 1.0f);
 
             Matrix.multiplyMM(modelViewProjection, 0, projectionMatrix, 0, modelViewMatrix, 0);
 
@@ -250,6 +260,7 @@ public class GLRenderer implements GLSurfaceView.Renderer {
                 e.printStackTrace();
             }
         }
+        GLES20.glDisable(GLES20.GL_DEPTH_TEST);
     }
 
     public void checkGLerror(String op) {

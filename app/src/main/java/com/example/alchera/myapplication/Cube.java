@@ -195,8 +195,6 @@ public class Cube {
         GLES20.glEnableVertexAttribArray(mPositionHandle);
         mMVPMatrixHandle = GLES20.glGetUniformLocation(mProgram2, "uMVPMatrix");
 
-        mMVPMatrixHandle = GLES20.glGetUniformLocation(mProgram2, "uMVPMatrix");
-
         GLES20.glUniformMatrix4fv(mMVPMatrixHandle,1,false,mvpMatrix,0);
 
         GLES20.glDrawElements(GLES20.GL_TRIANGLES, indices.length, GLES20.GL_UNSIGNED_SHORT, drawListBuffer);
