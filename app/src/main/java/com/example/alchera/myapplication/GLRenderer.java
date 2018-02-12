@@ -2,7 +2,11 @@ package com.example.alchera.myapplication;
 
 import android.app.Activity;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.ImageFormat;
 import android.graphics.Point;
+import android.graphics.YuvImage;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 
@@ -10,16 +14,20 @@ import android.opengl.Matrix;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
 
 import com.vuforia.COORDINATE_SYSTEM_TYPE;
 import com.vuforia.CameraDevice;
 import com.vuforia.Device;
+import com.vuforia.Frame;
 import com.vuforia.GLTextureData;
 import com.vuforia.GLTextureUnit;
+import com.vuforia.Image;
 import com.vuforia.Matrix34F;
 import com.vuforia.Matrix44F;
 import com.vuforia.Mesh;
 import com.vuforia.ObjectTarget;
+import com.vuforia.PIXEL_FORMAT;
 import com.vuforia.Renderer;
 import com.vuforia.RenderingPrimitives;
 import com.vuforia.State;
@@ -34,6 +42,17 @@ import com.vuforia.Vec4I;
 import com.vuforia.VideoMode;
 import com.vuforia.ViewList;
 import com.vuforia.Vuforia;
+import com.vuforia.ar.pl.DebugLog;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
+import java.util.ArrayList;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL;
@@ -46,7 +65,7 @@ import javax.microedition.khronos.opengles.GL10;
 public class GLRenderer implements GLSurfaceView.Renderer {
 
     private final String TAG = "GLRenderer";
-    private Activity mActivity = null;
+    private MainActivity mActivity = null;
     private Renderer mRenderer = null;
     RenderingPrimitives mRenderingPrimitives = null;
     GLTextureUnit mVideoBackgroundTex = null;
@@ -62,7 +81,7 @@ public class GLRenderer implements GLSurfaceView.Renderer {
 
     public GLRenderer(Activity activity){
         //init Rendering
-        mActivity=activity;
+        mActivity=(MainActivity) activity;
         mRenderer = Renderer.getInstance();
 
         Device device = Device.getInstance();
@@ -130,10 +149,74 @@ public class GLRenderer implements GLSurfaceView.Renderer {
         //TODO : 이 부분 에러 해결해야 할 듯
         //checkGLerror("136Line");
 
+//       // Vuforia.setFrameFormat(PIXEL_FORMAT.YUV, true); //frame 포맷 지정
+//        Vuforia.setFrameFormat(PIXEL_FORMAT.RGB565, true); //frame 포맷 지정
+//
+//        Frame frame = state.getFrame();
+//        Image image = null;
+//
+//        for(int i =0;i<frame.getNumImages();i++) {
+//
+//            image = frame.getImage(i);
+//            int width = image.getWidth();
+//            int height = image.getHeight();
+//
+//            if(image.getFormat()==PIXEL_FORMAT.RGB565) {
+//                ByteBuffer pixels = image.getPixels();
+//                byte[] pixelArray = new byte[pixels.remaining()];
+//                pixels.get(pixelArray, 0, pixelArray.length);
+//
+//                saveCapturedImage(pixelArray, width, height);
+//            }
+//
+//            if (image.getFormat()==PIXEL_FORMAT.YUV)
+//            {
+//                ByteBuffer pixels = image.getPixels();
+//                byte[] pixelArray = new byte[pixels.remaining()];
+//                YuvImage img = new YuvImage(pixelArray, ImageFormat.NV21, width, height, null);
+//                ByteArrayOutputStream out = new ByteArrayOutputStream();
+//                img.compressToJpeg(new android.graphics.Rect(0, 0, width, height), 100, out);
+//                byte[] imageBytes = out.toByteArray();
+//                Bitmap bp = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
+//
+//                try {
+//                    OutputStream stream = new FileOutputStream(Environment.getExternalStorageDirectory().getAbsolutePath()+"/YUV.png");
+//                    bp.compress(Bitmap.CompressFormat.JPEG, 80, stream);
+//                    stream.close();
+//                } catch (IOException e) {
+//                    Log.e("IOException", e.getMessage());
+//                }
+//            }
+//
+//        }
         renderFrame(state);
 
         mRenderer.end();
     }
+
+//    //rgb 이미지 저장
+//    public void saveCapturedImage(byte[] buffer, int width, int height)
+//    {
+//        String state = Environment.getExternalStorageState();
+//        String FILE_FULL_PATH = Environment.getExternalStorageDirectory().getAbsolutePath()+"/test.png";
+//        if (Environment.MEDIA_MOUNTED.equals(state)) {
+//            //Bitmap bitmap = BitmapFactory.decodeByteArray(buffer,0,buffer.length);
+//            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+//            bitmap.copyPixelsFromBuffer(ByteBuffer.wrap(buffer));
+//            Log.e("save image","width"+width+"height"+height);
+//            try {
+//                OutputStream stream = new FileOutputStream(FILE_FULL_PATH);
+//                bitmap.compress(Bitmap.CompressFormat.PNG, 80, stream);
+//                stream.close();
+//            } catch (FileNotFoundException e) {
+//                Log.e("FileNotFound", e.getMessage());
+//            } catch (IOException e) {
+//                Log.e("IOException", e.getMessage());
+//            }
+//        }
+//        else
+//            Log.e("external storage","cant write");
+//    }
 
     public void renderVideoBackground()
     {
@@ -158,6 +241,7 @@ public class GLRenderer implements GLSurfaceView.Renderer {
         GLES20.glUseProgram(mProgram);
         GLES20.glVertexAttribPointer(mVertexPosition, 3, GLES20.GL_FLOAT, false, 0, vbMesh.getPositions().asFloatBuffer());
         GLES20.glVertexAttribPointer(mVertexTexCoord, 2, GLES20.GL_FLOAT, false, 0, vbMesh.getUVs().asFloatBuffer());
+
 
         GLES20.glUniform1i(mTexSampler2D, videoTextureUnit);
 

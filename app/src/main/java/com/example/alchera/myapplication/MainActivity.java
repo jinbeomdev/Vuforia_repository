@@ -2,22 +2,30 @@ package com.example.alchera.myapplication;
 
 import android.app.Activity;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 
 import com.vuforia.CameraDevice;
 import com.vuforia.DataSet;
 import com.vuforia.Device;
+import com.vuforia.Frame;
 import com.vuforia.INIT_FLAGS;
+import com.vuforia.Image;
 import com.vuforia.ObjectTracker;
+import com.vuforia.PIXEL_FORMAT;
 import com.vuforia.STORAGE_TYPE;
+import com.vuforia.State;
 import com.vuforia.Trackable;
 import com.vuforia.Tracker;
 import com.vuforia.TrackerManager;
 import com.vuforia.Vuforia;
+import com.vuforia.ar.pl.DebugLog;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 
@@ -30,11 +38,13 @@ public class MainActivity extends Activity {
     ObjectTracker mObjectTracker;
 
     ArrayList<String> mDataSetStrings = new ArrayList<String>();
+
     DataSet mDataset;
 
     GLView mGLView;
     GLRenderer mRenderer;
 
+    int index = -1;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,7 +54,9 @@ public class MainActivity extends Activity {
         } else {
             InitVuforiaTask initVuforiaTask = new InitVuforiaTask(this);
             initVuforiaTask.execute();
+            Vuforia.setFrameFormat(PIXEL_FORMAT.RGB565, true);
         }
+
     }
 
     /*
@@ -52,19 +64,8 @@ public class MainActivity extends Activity {
     Vuforia -> Tracker -> OpenGL -> Camera 순으로 초기화했으니
     Camera _> OpenGL -> Tracker -> Vuforia deinit하는게 맞을 것 같다.
      */
-    @Override
-    protected void onPause() {
-        super.onPause();
+//
 
-        CameraDevice.getInstance().stop();
-        CameraDevice.getInstance().deinit();
-
-        mGLView.onPause();
-
-        mObjectTracker.stop();
-
-        Vuforia.onPause();
-    }
 
     /*
     TODO : onResume(), onDestory() 구현
@@ -78,6 +79,7 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+
         super.onDestroy();
 
         CameraDevice.getInstance().stop();
@@ -158,6 +160,7 @@ public class MainActivity extends Activity {
         }
     }
 
+
     class LoadTrackerData extends  AsyncTask {
         Activity mActivity;
 
@@ -167,6 +170,7 @@ public class MainActivity extends Activity {
 
         @Override
         protected Object doInBackground(Object[] objects) {
+
             //Data load
            // mDataSetStrings.add("MyApplication.xml");
             mDataSetStrings.add("StonesAndChips.xml");
@@ -195,6 +199,7 @@ public class MainActivity extends Activity {
             mGLView.setRenderer(mRenderer);
             addContentView(mGLView, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
+            Vuforia.setFrameFormat(PIXEL_FORMAT.YUV, true);
             StartCameraAndTracker startCameraAndTracker = new StartCameraAndTracker();
             startCameraAndTracker.execute();
         }
@@ -204,6 +209,7 @@ public class MainActivity extends Activity {
         @Override
         protected Object doInBackground(Object[] objects) {
             //Camera init
+            Vuforia.setFrameFormat(PIXEL_FORMAT.RGB565, true);
 
             if(!CameraDevice.getInstance().init(CameraDevice.CAMERA_DIRECTION.CAMERA_DIRECTION_DEFAULT)) {
                 Log.e("camera", "error1");
@@ -225,4 +231,5 @@ public class MainActivity extends Activity {
             return null;
         }
     }
+
 }
